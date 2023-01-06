@@ -11,7 +11,7 @@
 #' For each covariate, print (and plot) the percentage of the number of clusters for each covariate in stored MCMC iterations.
 #'
 #' The height of the bar represents the percentage of the number of the clusters within the stored MCMC samples. \cr
-#' Pr(# clusters for covariate j ==1) is the probability for the null hypothesis that the covairate j is not significant
+#' Pr(# clusters for covariate j ==1) is the probability for the null hypothesis that the covariate j is not significant
 #' for transition probabilities or duration times, depending on the result type.
 #'
 #' @param results either results$results_trans or results$results_duration
@@ -307,26 +307,25 @@ get_histogram_by_component <- function(results,comp=1:results$K) {
 #'
 #' @param results results of duration times, i.e., results$results_duration
 #' @param decimal_pts specify the number of decimal points of the results; default is 2
-#' @param include_plot display plot if TRUE; default is TRUE
+#' @param include_plot display plot if TRUE; default is FALSE
 #' 
 #' @return No return value, called for printing and plotting heatmaps for mixture parameters.
 #' 
 #' @examples
 #' results <- BMRMM(foxp2_sm,num_cov=2,simsize=50)
-#' get_heatmap_mix_param(results$results_duration)
+#' get_mixture_params(results$results_duration)
 #' 
 #' @export
-get_heatmap_mix_param <- function(results,decimal_pts=2,include_plot=TRUE) {
+get_mixture_params <- function(results,decimal_pts=2,include_plot=FALSE) {
   if(results$Type != 'Duration Times')
     stop("'results' must be duration times results")
   simsize <- results$MCMCparams$simsize
   m <- cbind(shape.k=results$Shape_Samples[simsize,],rate.k=results$Rate_Samples[simsize,])
   m <- round(m,decimal_pts)
-  title <- 'Heatmap for Mixture Probabilities'
+  title <- 'Mixture Parameters'
   cat(title,"\n")
   print(m)
   if(include_plot) {
-    #par(mfrow=c(1,1),mar=c(4,4,4,4))
     heatmap_of_matrix(results,m,title)
   }
 }
@@ -344,16 +343,16 @@ get_heatmap_mix_param <- function(results,decimal_pts=2,include_plot=TRUE) {
 #' @param cov_labels a matrix such that row i represents the labels for covariate i; default labels for covariate i is 1:i
 #' @param cov_index a vector of indices of covariate to plot; default is 1:Num_Covariates
 #' @param decimal_pts specify the number of decimal points of the results; default is 2
-#' @param include_plot display plot if TRUE; default is TRUE
+#' @param include_plot display plot if TRUE; default is FALSE
 #' @examples
 #' results <- BMRMM(foxp2_sm,num_cov=2,simsize=50)
-#' get_heatmap_by_cov(results$results_duration) 
-#' get_heatmap_by_cov(results$results_duration,cov_index=c(1,2))
+#' get_mixture_probs_by_cov(results$results_duration) 
+#' get_mixture_probs_by_cov(results$results_duration,cov_index=c(1,2))
 #' @return No return value, called for printing and plotting heatmaps for mixture probabilities for each covariate.
 #'
 #'
 #' @export
-get_heatmap_by_cov <- function(results,cov_labels=NULL,cov_index=1:ncol(results$Xexgns),decimal_pts=2,include_plot=TRUE) {
+get_mixture_probs_by_cov <- function(results,cov_labels=NULL,cov_index=1:ncol(results$Xexgns),decimal_pts=2,include_plot=FALSE) {
   if(results$Type != 'Duration Times')
     stop("'results' must be duration times results")
   ind_arr <- list()
@@ -370,7 +369,7 @@ get_heatmap_by_cov <- function(results,cov_labels=NULL,cov_index=1:ncol(results$
       prob_to_plot[cc,] <- apply(dat,c(pp),mean)
     }
     colnames(prob_to_plot) <- cov_labels[pp,1:results$dpreds[pp]]
-    title <- paste("Heatmap for Covariate",colnames(results$Xexgns)[pp])
+    title <- paste("Mixture probabilites for covariate",colnames(results$Xexgns)[pp])
     prob_to_plot <- round(prob_to_plot,decimal_pts)
     cat(title,"\n")
     print(prob_to_plot)
