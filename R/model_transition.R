@@ -2,7 +2,7 @@
 ### This function is used when ISI is ignored or modeled as a discrete state ###
 ################################################################################
 
-model_transition <- function(data,switch_off_random,simsize,burnin) {
+model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,burnin) {
 
   ################## process data ##################
   # data columns should be: id, selected covariates, prev state, current state
@@ -62,10 +62,12 @@ model_transition <- function(data,switch_off_random,simsize,burnin) {
   log0 <- zeros(N_MCMC,1)
   ind_all <- unique(sortrows(as.matrix(cbind(Xnew,Id))))
 
-  if (switch_off_random) {
-    piv <- ones(max(Id),d0) # probability for population-level effect
-  } else {
+  if (!switch_off_random && !switch_off_fixed) {
     piv <- 0.8*ones(max(Id),d0) # probability for population-level effect
+  } else if (!switch_off_random) {
+    piv <- zeros(max(Id),d0) # probability for population-level effect
+  } else {
+    piv <- ones(max(Id),d0) # probability for population-level effect
   }
   v <- sample(0:1,Ntot,TRUE,prob=c(1-piv[1,1],piv[1,1])) # v=0:anmls; v=1:exgns
 
@@ -123,6 +125,7 @@ model_transition <- function(data,switch_off_random,simsize,burnin) {
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
   lambda0 <- C/repmat(colSums(C),d0,1)
+  lambda0[,is.nan(colSums(lambda0))] <- ones(size(lambda0)[1],1)/size(lambda0)[1]
   lambda0_mat_expanded_exgns <- repmat(lambda0,1,prod(dpreds))
   lambda0_mat_expanded_anmls <- repmat(lambda0,1,max(Id))
 
@@ -177,7 +180,7 @@ model_transition <- function(data,switch_off_random,simsize,burnin) {
 
     ### updating z (#clusters)
     M00 <- M[kkk,]
-    if(kkk>1) {
+    if(kkk>1 && !switch_off_fixed) {
       for(j in 1:p) {
         for(k in 1:dpreds[j]) {
           for(l in 1:dpreds[j]) {
@@ -207,7 +210,7 @@ model_transition <- function(data,switch_off_random,simsize,burnin) {
       pi[j,1:dpreds[j]] <- pi[j,1:dpreds[j]]/sum(pi[j,1:dpreds[j]])
     }
 
-    if (!switch_off_random) {
+    if (switch_off_random || switch_off_fixed) {
       ### updating v (v=0: anmls; v=1: exgns)
       prob <- zeros(Ntot,2)
       piv_mat <- matrix(piv,nrow=max(Id))

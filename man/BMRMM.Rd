@@ -8,6 +8,7 @@ BMRMM(
   data,
   num_cov,
   switch_off_random = FALSE,
+  switch_off_fixed = FALSE,
   trans_cov_index = 1:num_cov,
   duration_type = "Continuous",
   duration_cov_index = 1:num_cov,
@@ -26,6 +27,8 @@ BMRMM(
 \item{num_cov}{total number of covariates provided in 'data'}
 
 \item{switch_off_random}{TRUE if only population-level effects are considered, default is FALSE}
+
+\item{switch_off_fixed}{TRUE if only individual-level effects are considered, default is FALSE}
 
 \item{trans_cov_index}{indices of covariates that are used for transition probabilities, default is all of the covariates}
 

@@ -21,7 +21,7 @@ For each covariate, print (and plot) the percentage of the number of clusters fo
 }
 \details{
 The height of the bar represents the percentage of the number of the clusters within the stored MCMC samples. \cr
-Pr(# clusters for covariate j ==1) is the probability for the null hypothesis that the covairate j is not significant
+Pr(# clusters for covariate j ==1) is the probability for the null hypothesis that the covariate j is not significant
 for transition probabilities or duration times, depending on the result type.
 }
 \examples{

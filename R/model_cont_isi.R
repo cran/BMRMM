@@ -2,7 +2,7 @@
 ### This function is used when ISI is modeled as mixture gammas ###
 ###################################################################
 
-model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,init_beta) {
+model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burnin,K,init_alpha,init_beta) {
 
   ################## process data ##################
   # construct isi data and covs for simulation
@@ -20,7 +20,12 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
   num_combs <- nrow(all_combs)
   z.max <- K # number of mixture components
 
-  M00 <- covs.max
+  if (switch_off_fixed){
+    M00 <- ones(1,p)
+  } else {
+    M00 <- covs.max
+  }
+  
   M <- matrix(0,nrow=simsize,ncol=p) # record # of clusters for each iteration
 
   clusts <- kmeans(isi,z.max)$cluster # get clusters via kmeans
@@ -31,11 +36,13 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
   lambdaalpha <- 0.01 # alpha_{isi,0}
   lambda <- array(lambda00,dim=c(z.max,1)) # lambda_{g1,g2,g3}
   # individual probability and lambda
-  if (switch_off_random) {
-    piv <- matrix(1,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
-  } else {
+  if (!switch_off_random && !switch_off_fixed) {
     piv <- matrix(0.8,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
-  }
+  } else if (!switch_off_random) {
+    piv <- matrix(0,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
+  } else { 
+    piv <- matrix(1,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
+  } 
   v <- sample(0:1,num_row,prob=c(piv[1,1],1-piv[1,1]),replace=TRUE) # v=0: exgns, v=1: anmls
   lambda_mice <- matrix(rep(lambda00,each=max(mouseId)),nrow=max(mouseId))
   lambda_mice_alpha <- 0.01 # alpha_{isi}^{0}
@@ -48,11 +55,17 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
   Beta <- matrix(1,nrow=simsize,ncol=z.max) # rate
 
   # cluster assignment for each covariate
-  z.cov <- as.matrix(covs) # initially, each covariate forms its own cluster
-  G <- matrix(0,nrow=p,ncol=max(covs.max))
-  for(pp in 1:p){
-    G[pp,1:covs.max[pp]] <- 1:covs.max[pp]
+  if (switch_off_fixed) {
+    z.cov <- ones(num_row,p) # initially, each covariate forms one cluster
+    G <- matrix(1,nrow=p,ncol=max(covs.max))
+  } else {
+    z.cov <- as.matrix(covs) # initially, each covariate forms its own cluster
+    G <- matrix(0,nrow=p,ncol=max(covs.max))
+    for(pp in 1:p){
+      G[pp,1:covs.max[pp]] <- 1:covs.max[pp]
+    }
   }
+  
 
   # pM: prior probabilities of # of clusters for each covariate
   phi <- 0.25
@@ -81,7 +94,7 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
     if(iii%%100==0) print(paste("Duration Times: Iteration ",iii))
 
     # update # cluster for each covariate and cluster mapping
-    if(iii > 1) {
+    if(iii > 1 && !switch_off_fixed) {
       # update cluster indicator z
       M00 <- M[iii,]
       for(pp in 1:p){
@@ -278,7 +291,7 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
       }
     }
 
-    if (!switch_off_random) {
+    if (!switch_off_random || !switch_off_fixed) {
       # update v (v=0: exgns; v=1: anmls)
       mouse_k_pairs <- cbind(mouseId,z.vec)
       prob_exgns <- piv[mouse_k_pairs]*lambda[cbind(z.vec,z00)]
@@ -299,8 +312,10 @@ model_cont_isi <- function(data,switch_off_random,simsize,burnin,K,init_alpha,in
         vMouseMat <- vMat[,,id,]
         piv[id,] <- 1-rbeta(z.max,vMouseMat[1,]+1,vMouseMat[2,]+1)
       }
-
-      # update lambda_mice (lambda^(i))
+    }
+    
+    # update lambda_mice (lambda^(i))
+    if (!switch_off_random) {
       for(id in 1:max(mouseId)){
         vMouseCt <- vMat[,,id,][2,]
         lambda_mice[id,] <- rdirichlet(1,lambda_mice_alpha*lambda0+vMouseCt)

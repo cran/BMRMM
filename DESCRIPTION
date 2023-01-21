@@ -1,6 +1,6 @@
 Package: BMRMM
 Title: An Implementation of the Bayesian Markov (Renewal) Mixed Models
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: c(
     person(given = "Yutong",family = "Wu",role = c("aut", "cre"),email = "yutong.wu@utexas.edu"),
     person(given = "Abhra",family = "Sarkar",role = c("aut"),email = "abhra.sarkar@utexas.edu"))
@@ -15,6 +15,6 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
 NeedsCompilation: no
-Packaged: 2023-01-06 18:28:26 UTC; yutongwu
+Packaged: 2023-01-21 02:16:23 UTC; yutongwu
 Repository: CRAN
-Date/Publication: 2023-01-06 22:30:42 UTC
+Date/Publication: 2023-01-21 15:10:02 UTC

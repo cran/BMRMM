@@ -80,6 +80,7 @@ NULL
 #' @param data a data frame containing -- individual ID, covariate values, previous state, current state, duration times (if applicable), in that order
 #' @param num_cov total number of covariates provided in 'data'
 #' @param switch_off_random TRUE if only population-level effects are considered, default is FALSE
+#' @param switch_off_fixed TRUE if only individual-level effects are considered, default is FALSE
 #' @param trans_cov_index indices of covariates that are used for transition probabilities, default is all of the covariates
 #' @param duration_type one of 'None', 'Discrete', 'Continuous', default is 'Continuous'
 #' @param duration_unit the discretization of duration times, only used when 'duration_type' is 'Discrete'
@@ -92,7 +93,8 @@ NULL
 #' @param burnin number of burn-ins for the MCMC iterations, default is simsize/2
 #' 
 #' @export
-BMRMM <- function(data,num_cov,switch_off_random=FALSE,trans_cov_index=1:num_cov,duration_type='Continuous',
+BMRMM <- function(data,num_cov,switch_off_random=FALSE,switch_off_fixed=FALSE,
+                  trans_cov_index=1:num_cov,duration_type='Continuous',
                   duration_cov_index=1:num_cov,duration_excl_prev_state=FALSE,duration_unit=NULL,
                   duration_num_comp=4,duration_init_shape=rep(1,duration_num_comp),
                   duration_init_rate=rep(1,duration_num_comp),simsize=10000,burnin=simsize/2) {
@@ -125,21 +127,21 @@ BMRMM <- function(data,num_cov,switch_off_random=FALSE,trans_cov_index=1:num_cov
   # get results
   res_duration <- NULL
   if(duration_type=='None') {
-    res_trans <- model_transition(data.frame(cbind(id,trans_covs,prev_state,cur_state)),switch_off_random,simsize,burnin)
+    res_trans <- model_transition(data.frame(cbind(id,trans_covs,prev_state,cur_state)),switch_off_random,switch_off_fixed,simsize,burnin)
   } else if(duration_type=='Discrete') {
     duration <- data[,num_col]
     if(is.null(duration_unit)) {
       stop("Must specify 'duration_unit' if treating duration time as a discrete variable.")
     } else {
       aug_data <- add_isi_as_state(data.frame(cbind(id,trans_covs,prev_state,cur_state,duration)),duration_unit)
-      res_trans <- model_transition(aug_data,switch_off_random,simsize,burnin)
+      res_trans <- model_transition(aug_data,switch_off_random,switch_off_fixed,simsize,burnin)
     }
   } else if(duration_type=='Continuous') {
     duration <- data[,num_col]
     data_for_trans <- data.frame(cbind(id,trans_covs,prev_state,cur_state))
     data_for_duration <- data.frame(cbind(id,duration_covs,duration))
-    res_trans <- model_transition(data_for_trans,switch_off_random,simsize,burnin)
-    res_duration <- model_cont_isi(data_for_duration,switch_off_random,simsize=simsize,burnin=burnin,K=duration_num_comp,duration_init_shape,duration_init_rate)
+    res_trans <- model_transition(data_for_trans,switch_off_random,switch_off_fixed,simsize,burnin)
+    res_duration <- model_cont_isi(data_for_duration,switch_off_random,switch_off_fixed,simsize=simsize,burnin=burnin,K=duration_num_comp,duration_init_shape,duration_init_rate)
   } else {
     stop("'duration_type' must be one of 'None', 'Discrete' and 'Continuous'.")
   }
