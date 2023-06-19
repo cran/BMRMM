@@ -6,113 +6,112 @@
 \usage{
 BMRMM(
   data,
-  num_cov,
-  switch_off_random = FALSE,
-  switch_off_fixed = FALSE,
-  trans_cov_index = 1:num_cov,
-  duration_type = "Continuous",
-  duration_cov_index = 1:num_cov,
-  duration_excl_prev_state = FALSE,
-  duration_unit = NULL,
-  duration_num_comp = 4,
-  duration_init_shape = rep(1, duration_num_comp),
-  duration_init_rate = rep(1, duration_num_comp),
+  num.cov,
+  cov.labels = NULL,
+  state.labels = NULL,
+  random.effect = TRUE,
+  fixed.effect = TRUE,
+  trans.cov.index = 1:num.cov,
+  duration.cov.index = 1:num.cov,
+  duration.distr = NULL,
+  duration.incl.prev.state = TRUE,
   simsize = 10000,
   burnin = simsize/2
 )
 }
 \arguments{
-\item{data}{a data frame containing -- individual ID, covariate values, previous state, current state, duration times (if applicable), in that order}
+\item{data}{a data frame containing -- individual ID, covariate values, previous state, current state, duration times (if applicable), in that order.}
 
-\item{num_cov}{total number of covariates provided in 'data'}
+\item{num.cov}{total number of covariates provided in \code{data}.}
 
-\item{switch_off_random}{TRUE if only population-level effects are considered, default is FALSE}
+\item{cov.labels}{a list of vectors giving names of the covariate levels. Default is a list of numerical vectors.}
 
-\item{switch_off_fixed}{TRUE if only individual-level effects are considered, default is FALSE}
+\item{state.labels}{a vector giving names of the states. Default is a numerical vector.}
 
-\item{trans_cov_index}{indices of covariates that are used for transition probabilities, default is all of the covariates}
+\item{random.effect}{\code{TRUE} if population-level effects are considered. Default is \code{TRUE}.}
 
-\item{duration_type}{one of 'None', 'Discrete', 'Continuous', default is 'Continuous'}
+\item{fixed.effect}{\code{TRUE} if individual-level effects are considered. Default is \code{TRUE}.}
 
-\item{duration_cov_index}{indices of covariates that are used for duration times, default is all of the covariates plus the previous state}
+\item{trans.cov.index}{a numeric vector indicating the indices of covariates that are used for transition probabilities. Default is all of the covariates.}
 
-\item{duration_excl_prev_state}{TRUE if the previous state is excluded from duration times inference, default is FALSE}
+\item{duration.cov.index}{a numeric vector indicating the indices of covariates that are used for duration times. Default is all of the covariates.}
 
-\item{duration_unit}{the discretization of duration times, only used when 'duration_type' is 'Discrete'}
+\item{duration.distr}{a list of arguments indicating the distribution of duration times. Default is \code{NULL}, which is ignoring duration times.}
 
-\item{duration_num_comp}{number of gamma mixture components for duration times, default is 4}
+\item{duration.incl.prev.state}{\code{TRUE} if the previous state is included in the inference of duration times. Default is \code{TRUE}.}
 
-\item{duration_init_shape}{initialization of mixture gamma shape parameters, default is a vector of 1 of size 'duration_num_comp'}
+\item{simsize}{total number of MCMC iterations. Default is 10000.}
 
-\item{duration_init_rate}{initialization of mixture gamma rate parameters, default is a vector of 1 of size 'duration_num_comp'}
-
-\item{simsize}{total number of MCMC iterations, default is 10000}
-
-\item{burnin}{number of burn-ins for the MCMC iterations, default is simsize/2}
+\item{burnin}{number of burn-ins for the MCMC iterations. Default is \code{simsize}/2.}
 }
 \value{
-List of results for transition probabilities and durations times, list(trans_results, duration_results). See details.
+An object of class \code{BMRMM} consisting of \code{results.trans} and \code{results.duration} if duration times are analyzed as a continuous variable. \cr
+
+The field \code{results.trans} is a data frame giving the inference results of transition probabilities.
+\tabular{ll}{
+\code{covs} \tab covariates levels for each row of the data. \cr
+\code{dpreds} \tab maximum level for each related covariate. \cr
+\code{MCMCparams} \tab MCMC parameters including simsize, burnin and thinning factor. \cr
+\code{tp.exgns.post.mean}\tab posterior mean of transition probabilities for different combinations of covariates. \cr
+\code{tp.exgns.post.std} \tab posterior standard deviation of transition probabilities for different combinations of covariates.  \cr
+\code{tp.anmls.post.mean} \tab  posterior mean of transition probabilities for different individuals. \cr
+\code{tp.anmls.post.std} \tab  posterior standard deviation of transition probabilities for different individuals. \cr
+\code{tp.all.post.mean} \tab  posterior mean of transition probabilities for different combinations of covariates AND different individuals. \cr
+\code{tp.exgns.diffs.store} \tab  difference in posterior mean of transition probabilities for every pair of covariate levels given levels of the other covariates. \cr
+\code{tp.exgns.all.itns} \tab population-level transition probabilities for every MCMC iteration. \cr
+\code{clusters} \tab number of clusters for each covariate for each MCMC iteration. \cr
+\code{type} \tab a string identifier for results, which is "Transition Probabilities". \cr
+\code{cov.labels} \tab a list of string vectors giving labels of covariate levels. \cr
+\code{state.labels} \tab a list of strings giving labels of states. \cr
+}
+The field \code{results.duration} is a data frame giving the inference results of duration times.
+\tabular{ll}{
+\code{covs} \tab covariates related to duration times.\cr
+\code{dpreds} \tab maximum level for each related covariate.\cr
+\code{MCMCparams} \tab MCMC parameters: simsize, burnin and thinning factor.\cr
+\code{duration.times} \tab  duration times from the data set.\cr
+\code{comp.assignment} \tab mixture component assignment for each data point in the last MCMC iteration.\cr
+\code{duration.exgns.store} \tab posterior mean of mixture probabilities for different combinations of covariates of each MCMC iteration.\cr
+\code{marginal.prob} \tab estimated marginal mixture probabilities for each MCMC iteration.\cr
+\code{shape.samples} \tab estimated shape parameters for gamma mixtures for each MCMC iteration.\cr
+\code{rate.samples} \tab estimated rate parameters for gamma mixtures for each MCMC iteration.\cr
+\code{clusters} \tab number of clusters for each covariate for each MCMC iteration.\cr
+\code{type} \tab a string identifier for results, which is "Duration Times".\cr
+\code{cov.labels} \tab a list of string vectors giving labels of covariate levels. \cr
+}
 }
 \description{
 Provides inference results of both transition probabilities and duration times using BMRMMs.
 }
 \details{
-Returns list(trans_results, duration_results) \cr
+Users have the option to ignore duration times or model duration times as
+a discrete or continuous variable via defining \code{duration.distr}.
 
-(1) Users have the option to ignore duration times or model duration times as a discrete or continuous variable via defining 'duration_type':\cr
-"None": ignores duration times \cr
-"Continuous": treat duration times as a continuous variable (DEFAULT)\cr
-"Discrete": treat duration times as a new state with discretization 'duration_unit'.
-If 'Discrete' is used, duration times becomes a new state type. 'duration_unit' must be specified if 'duration_type' is 'Discrete'.
-For example, if an duration time entry is 20 and 'duration_unit' is 5, then the model will add 4 consecutive new states.
-If an duration time entry is 23.33 and 'duration_unit' is 5, then the model will still add 4 consecutive new states
-as the blocks are calculated with the floor operation  \cr
-
-(2) 'trans_results' contains the results of the transition probabilities:\cr
-- "Num_States": total number of states \cr
-- "Xexgns": covariates related to transition probabilities \cr
-- "dpreds": maximum level for each related covariate \cr
-- "MCMCparams": MCMC parameters: simsize, burnin and thinning factor \cr
-- "TP_Exgns_Post_Mean": posterior mean of transition probabilities for different combinations of exogenous predictors \cr
-- "TP_Exgns_Post_Std": posterior standard deviation of transition probabilities for different combinations of exogenous predictors  \cr
-- "TP_Anmls_Post_Mean": posterior mean of transition distribution components for different individuals \cr
-- "TP_All_Post_Mean": posterior mean of transition distribution components for different combinations of exogenous predictors AND different individuals \cr
-- "TP_Anmls_Post_Std": standard deviation of transition probabilities among different mice \cr
-- "TP_Exgns_Diffs_Store": difference in posterior mean of transition probabilities for every pair of covariate levels given levels of the other covariates \cr
-- "TP_Exgns_All_Itns": exogenous transition probabilities for every MCMC iteration \cr
-- "Clusters": number of clusters for each covariate for each MCMC iteration \cr
-- "Type": an identifier for results, which is "Transition Probabilities". \cr
-
-(3) 'duration_results' contains the results of the duration times ('duration_results' is NULL if 'duration_type' is 'None'):\cr
-"K" <- number of gamma mixture components \cr
-"Xexgns" <- covariates related to duration times\cr
-"dpreds" <- maximum level for each related covariate\cr
-"MCMCparams" <- MCMC parameters: simsize, burnin and thinning factor\cr
-"Duration_Times" <- input duration times\cr
-"Comp_Assign" <- mixture component assignment for each data point in the last MCMC iteration\cr
-"Duration_Exgns_Store" <- posterior mean of mixture probabilities for different combinations of exogenous predictors of each MCMC iteration\cr
-"Marginal_Prob" <- estimated marginal mixture probabilities for each iteration\cr
-"Shape_Samples" <- estimated shape parameters for gamma mixtures for each iteration\cr
-"Rate_Samples" <- estimated rate parameters for gamma mixtures for each iteration\cr
-"Clusters" <- number of clusters for each covariate for each MCMC iteration\cr
-"Type" <- an identifier for results, which is "Inter-Syllable Intervals".\cr
+\code{duration.distr} can be one of the following: \cr
+\itemize{
+\item{\code{NULL}}{ duration times are ignored. This is the default setting.}
+\item{\code{list('mixgamma', shape, rate)}}{ duration times are modeled as a mixture gamma variable. \code{shape} and \code{rate}
+must be numeric vectors of the same length. The length indicates the number of mixture components.}
+\item{\code{list('mixDirichlet', unit)}}{ duration times are modeled as a new state with discretization \code{unit}. The duration
+state is then analyzed along with the original states. For example, if an duration time entry is 20 and \code{unit} is 5,
+then the model will add 4 consecutive new states. If an duration time entry is 23.33 and \code{unit} is 5, then the model
+will still add 4 consecutive new states as the blocks are calculated with the floor operation.}
+}
 }
 \examples{
 
-# In the examples, we use a shorted version of the foxp2 dataset, foxp2_sm
+# In the examples, we use a shorted version of the foxp2 dataset, foxp2sm
 
 # ignores duration times and only models transition probabilities using all three covariates
-results <- BMRMM(foxp2_sm,num_cov=2,duration_type='None',simsize=50)
+results <- BMRMM(foxp2sm, num.cov = 2, simsize = 50)
 
-# models duration times as a continuous variable with 5 gamma mixture components,
-# using covariate 1 and the previous state
-results <- BMRMM(foxp2_sm,num_cov=2,trans_cov_index=c(1),'duration_type'='Continuous',
-                 duration_cov_index=c(1),duration_num_comp=5,simsize=50)
+# models duration times as a continuous variable with 3 gamma mixture components,
+results <- BMRMM(foxp2sm, num.cov = 2, simsize = 50,
+                 duration.distr = list('mixgamma', shape = rep(1,3), rate = rep(1,3)))
 
-# models duration times as a discrete state with discretization 0.25 and
-# do not include the previous state as a covariate
-results <- BMRMM(foxp2_sm,num_cov=2,duration_type='Discrete',duration_excl_prev_state=TRUE,
-                 duration_unit=0.025,simsize=50)
+# models duration times as a discrete state with discretization 0.025 and
+results <- BMRMM(foxp2sm, num.cov = 2, simsize = 50, 
+                 duration.distr = list('mixDirichlet', unit = 0.025))
 
 
 }

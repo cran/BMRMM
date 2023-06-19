@@ -6,7 +6,7 @@ isi_logml <- function(z,y,M,pM,alpha,zmax) {   # z:z_isi (only for important pre
   for(pp in 1:size(df,2))
     df <- sortrows(df,size(df,2)-pp+1)
   z0 <- unique(df)                   # z0 are the sorted unique combinations of (y,z_{pp,1},...,z_{pp,p0}), 
-  m <- which(duplicated(df)==FALSE)  # m contains the positions (indices) when they first appear on {1,...,n}
+  m <- which(!duplicated(df))  # m contains the positions (indices) when they first appear on {1,...,n}
   m <- c(diff(m),size(df,1)-m[length(m)]+1)
   C <- array(0,dim=c(zmax,M))        # d0=levels of the response y, M=number of clustered levels of x_{pp,1},...,x_{pp,p0}
   C[z0] <- C[z0]+m                   # add the differences in positions to cells of clT corresponding to the unique combinations -> gives the number of times (y,z_{pp,1},...,z_{pp,p0}) appears 

@@ -6,7 +6,7 @@ trans_logml <- function(zz,Yt,Ytminus1,v,lambda0_mat_expanded,dpreds) {
   v0 <- cbind(Yt[v==1],Ytminus1[v==1],zz[v==1,])
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0)
-  m00starts <- which(duplicated(v0)==FALSE) 
+  m00starts <- which(!duplicated(v0)) 
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1) 
   C <- array(0,dim=c(d0,d0,dpreds))
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts

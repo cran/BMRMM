@@ -2,7 +2,7 @@
 ### This function is used when ISI is ignored or modeled as a discrete state ###
 ################################################################################
 
-model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,burnin) {
+model_transition <- function(data,random_effect,fixed_effect,simsize,burnin) {
 
   ################## process data ##################
   # data columns should be: id, selected covariates, prev state, current state
@@ -28,7 +28,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   v0 <- cbind(Xexgns,Id)
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0) # unique combination of (x_{s,1},x_{s,2},...,id)
-  m00starts <- which(duplicated(v0)==FALSE) # start of each unique combination
+  m00starts <- which(!duplicated(v0)) # start of each unique combination
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1) # frequency of each combination
 
   ################ assign priors ###################
@@ -62,9 +62,9 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   log0 <- zeros(N_MCMC,1)
   ind_all <- unique(sortrows(as.matrix(cbind(Xnew,Id))))
 
-  if (!switch_off_random && !switch_off_fixed) {
+  if (random_effect && fixed_effect) {
     piv <- 0.8*ones(max(Id),d0) # probability for population-level effect
-  } else if (!switch_off_random) {
+  } else if (random_effect) {
     piv <- zeros(max(Id),d0) # probability for population-level effect
   } else {
     piv <- ones(max(Id),d0) # probability for population-level effect
@@ -76,7 +76,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   v0 <- cbind(Yt,Ytminus1,Xnew,Id)
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0)
-  m00starts <- which(duplicated(v0)==FALSE)
+  m00starts <- which(!duplicated(v0))
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
   T_All <- C
@@ -121,7 +121,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   v0 <- cbind(Yt,Ytminus1)
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0)
-  m00starts <- which(duplicated(v0)==FALSE)
+  m00starts <- which(!duplicated(v0))
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
   lambda0 <- C/repmat(colSums(C),d0,1)
@@ -134,7 +134,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   v0 <- cbind(Yt,Ytminus1,z)
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0)
-  m00starts <- which(duplicated(v0)==FALSE)
+  m00starts <- which(!duplicated(v0))
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
   Cdata <- matrix(C,nrow=d0)
@@ -151,7 +151,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
   v0 <- cbind(Yt,Ytminus1,Id)
   v0 <- v0[do.call(order,as.data.frame(v0)),]
   v00 <- unique(v0)
-  m00starts <- which(duplicated(v0)==FALSE)
+  m00starts <- which(!duplicated(v0))
   Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
   C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
   Cdata <- matrix(C,nrow=d0)
@@ -165,22 +165,22 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
 
   ### MCMC storage
   lambda_anmls_mat_tmp <- array(0,dim=c(d0,d0,max(Id)))
-  TP_All_Post_Mean <- array(0,dim=c(d0,d0,dpreds,max(Id)))
-  TP_Exgns_Post_Mean <- array(0,dim=c(d0,d0,dpreds))
+  tp.all.post.mean <- array(0,dim=c(d0,d0,dpreds,max(Id)))
+  tp.exgns.post.mean <- array(0,dim=c(d0,d0,dpreds))
   TP_Exgns_Store <- array(0,dim=c(d0,d0,dpreds,floor((N_MCMC-burnin)/N_Thin)))
-  TP_Exgns_Diffs_Store <- array(0,dim=c(p,max(num_pairs),d0,d0,rep(max(dpreds),length(dpreds)-1),floor((N_MCMC-burnin)/N_Thin)))
+  tp.exgns.diffs.store <- array(0,dim=c(p,max(num_pairs),d0,d0,rep(max(dpreds),length(dpreds)-1),floor((N_MCMC-burnin)/N_Thin)))
   TP_Anmls_Store <- array(0,dim=c(d0,d0,max(Id),floor((N_MCMC-burnin)/N_Thin)))
   TP_Exgns_Comp_Post_Mean <- array(0,dim=c(d0,d0,dpreds))
   TP_Anmls_Comp_Post_Mean <- array(0,dim=c(d0,d0,max(Id)))
   TP_Anmls_Comp_Store <- array(0,dim=c(d0,d0,max(Id),floor((N_MCMC-burnin)/N_Thin)))
-  TP_Exgns_All_Itns <- array(0,dim=c(d0,d0,dpreds,N_MCMC))
+  tp.exgns.all.itns <- array(0,dim=c(d0,d0,dpreds,N_MCMC))
 
   ### start sampler
   for(kkk in 1:N_MCMC) {
 
     ### updating z (#clusters)
     M00 <- M[kkk,]
-    if(kkk>1 && !switch_off_fixed) {
+    if(kkk>1 && fixed_effect) {
       for(j in 1:p) {
         for(k in 1:dpreds[j]) {
           for(l in 1:dpreds[j]) {
@@ -210,7 +210,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
       pi[j,1:dpreds[j]] <- pi[j,1:dpreds[j]]/sum(pi[j,1:dpreds[j]])
     }
 
-    if (switch_off_random || switch_off_fixed) {
+    if (!random_effect || !fixed_effect) {
       ### updating v (v=0: anmls; v=1: exgns)
       prob <- zeros(Ntot,2)
       piv_mat <- matrix(piv,nrow=max(Id))
@@ -224,7 +224,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
       v0 <- cbind(v+1,Ytminus1,Id)
       v0 <- v0[do.call(order,as.data.frame(v0)),]
       v00 <- unique(v0)
-      m00starts <- which(duplicated(v0)==FALSE)
+      m00starts <- which(!duplicated(v0))
       Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
       C[as.matrix(v00)] <- C[as.matrix(v00)]+Ts
       for(j in 1:max(Id)) {
@@ -238,7 +238,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
     v0 <- cbind(Yt[v==1],Ytminus1[v==1],z[v==1,])
     v0 <- v0[do.call(order,as.data.frame(v0)),]
     v00 <- unique(v0)
-    m00starts <- which(duplicated(v0)==FALSE)
+    m00starts <- which(!duplicated(v0))
     Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
     C1[as.matrix(v00)] <- C1[as.matrix(v00)]+Ts
     C1data <- matrix(C1,nrow=d0)
@@ -257,7 +257,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
       v0 <- expand.grid(1:d0,1:d0)
       v0 <- as.matrix(cbind(v0,repmat(as.numeric(cov_combs[row,]),nrow(v0),1)))
       v00 <- cbind(v0,rep(kkk,nrow(v0)))
-      TP_Exgns_All_Itns[v00] <- lambda_exgns[v0]
+      tp.exgns.all.itns[v00] <- lambda_exgns[v0]
     }
 
     ### updating lambda_anmls
@@ -265,7 +265,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
     v0 <- cbind(Yt[v==0],Ytminus1[v==0],Id[v==0])
     v0 <- v0[do.call(order,as.data.frame(v0)),]
     v00 <- unique(v0)
-    m00starts <- which(duplicated(v0)==FALSE)
+    m00starts <- which(!duplicated(v0))
     Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
     C2[as.matrix(v00)] <- C2[as.matrix(v00)]+Ts
     C2data <- matrix(C2,nrow=d0)
@@ -288,7 +288,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
       v0 <- cbind(Yt[v==1],Ytminus1[v==1],z[v==1,])
       v0 <- v0[do.call(order,as.data.frame(v0)),]
       v00 <- unique(v0)
-      m00starts <- which(duplicated(v0)==FALSE)
+      m00starts <- which(!duplicated(v0))
       Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
       C1[as.matrix(v00)] <- C1[as.matrix(v00)]+Ts
       C1data <- matrix(C1,nrow=d0)
@@ -318,7 +318,7 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
       v0 <- cbind(Yt[v==0],Ytminus1[v==0],Id[v==0])
       v0 <- v0[do.call(order,as.data.frame(v0)),]
       v00 <- unique(v0)
-      m00starts <- which(duplicated(v0)==FALSE)
+      m00starts <- which(!duplicated(v0))
       Ts <- c(diff(m00starts),nrow(v0)-m00starts[length(m00starts)]+1)
       C2[as.matrix(v00)] <- C2[as.matrix(v00)]+Ts
       C2data <- matrix(C2,nrow=d0)
@@ -387,15 +387,15 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
         all_index <- as.matrix(cbind(all_trans,repmat(c(attr,id),nrow(all_trans),1)))
         anmls_mat <- matrix(lambda_anmls[all_index[,c(1,2,ncol(all_index))]],nrow=d0)
         exgns_mat <- matrix(lambda_exgns[all_index[,c(1:(ncol(all_index)-1))]],nrow=d0)
-        TP_All_Post_Mean_Temp <- repmat(1-piv[id,],d0,1)*anmls_mat+repmat(piv[id,],d0,1)*exgns_mat
-        TP_All_Post_Mean[all_index] <- TP_All_Post_Mean[all_index]+TP_All_Post_Mean_Temp[all_trans]
+        tp.all.post.mean_Temp <- repmat(1-piv[id,],d0,1)*anmls_mat+repmat(piv[id,],d0,1)*exgns_mat
+        tp.all.post.mean[all_index] <- tp.all.post.mean[all_index]+tp.all.post.mean_Temp[all_trans]
       }
       TP_Anmls_Comp <- lambda_anmls
       TP_Anmls_Comp_Mean <- apply(lambda_anmls_mat_tmp,c(1,2),sum)/max(Id)
       TP_Anmls_Comp_Mean_Exgns <- array(repmat(TP_Anmls_Comp_Mean,1,prod(dpreds)),dim=c(d0,d0,dpreds))
       TP_Exgns_kkk <- (lambda0_mat_expanded_exgns+array(TP_Exgns_Comp,dim=c(d0,d0*prod(dpreds))))/2
       TP_Exgns_kkk <- array(TP_Exgns_kkk,dim=c(d0,d0,dpreds))
-      TP_Exgns_Post_Mean <- TP_Exgns_Post_Mean + TP_Exgns_kkk
+      tp.exgns.post.mean <- tp.exgns.post.mean + TP_Exgns_kkk
       TP_Exgns_Comp_Post_Mean <- TP_Exgns_Comp_Post_Mean + TP_Exgns_Comp
       TP_Anmls_Comp_Post_Mean <- TP_Anmls_Comp_Post_Mean + TP_Anmls_Comp
       v0 <- unique(cbind(Yt,Ytminus1,Xnew))
@@ -422,33 +422,32 @@ model_transition <- function(data,switch_off_random,switch_off_fixed,simsize,bur
           v2 <- v1
           v2[,pp+2] <- lvl2
           v0 <- cbind(rep(pp,nrow(v0)),rep(np,nrow(v0)),v0,rep(N_Store,nrow(v0)))
-          TP_Exgns_Diffs_Store[as.matrix(v0)] <- TP_Exgns_kkk[v1]-TP_Exgns_kkk[v2]
+          tp.exgns.diffs.store[as.matrix(v0)] <- TP_Exgns_kkk[v1]-TP_Exgns_kkk[v2]
         }
       }
     }
   }
 
-  TP_Exgns_Post_Mean <- TP_Exgns_Post_Mean/N_Store
-  TP_Exgns_Post_Std <- apply(TP_Exgns_Store,1:(length(size(TP_Exgns_Store))-1),sd)
+  tp.exgns.post.mean <- tp.exgns.post.mean/N_Store
+  tp.exgns.post.std <- apply(TP_Exgns_Store,1:(length(size(TP_Exgns_Store))-1),sd)
 
   TP_Exgns_Comp_Post_Mean <- TP_Exgns_Comp_Post_Mean/N_Store
   TP_Anmls_Comp_Post_Mean <- TP_Anmls_Comp_Post_Mean/N_Store
-  TP_All_Post_Mean <- TP_All_Post_Mean/N_Store
+  tp.all.post.mean <- tp.all.post.mean/N_Store
 
   TP_Anmls_Comp_Post_Std <- apply(TP_Anmls_Comp_Store,c(1,2),sd)
 
-  results <- list("Num_States"=d0,
-                  "Xexgns"=Xexgns,
+  results <- list("covs"=Xexgns,
                   "dpreds"=dpreds,
                   "MCMCparams"=list("simsize"=simsize,"burnin"=burnin,"N_Thin"=N_Thin),
-                  "TP_Exgns_Post_Mean"=TP_Exgns_Post_Mean,
-                  "TP_Exgns_Post_Std"=TP_Exgns_Post_Std,
-                  "TP_Anmls_Post_Mean"=TP_Anmls_Comp_Post_Mean,
-                  "TP_All_Post_Mean"=TP_All_Post_Mean,
-                  "TP_Anmls_Post_Std"=TP_Anmls_Comp_Post_Std,
-                  "TP_Exgns_Diffs_Store"=TP_Exgns_Diffs_Store,
-                  "TP_Exgns_All_Itns"=TP_Exgns_All_Itns,
-                  "Clusters"=M,
-                  "Type"="Transition Probabilities")
+                  "tp.exgns.post.mean"=tp.exgns.post.mean,
+                  "tp.exgns.post.std"=tp.exgns.post.std,
+                  "tp.anmls.post.mean"=TP_Anmls_Comp_Post_Mean,
+                  "tp.all.post.mean"=tp.all.post.mean,
+                  "tp.anmls.post.std"=TP_Anmls_Comp_Post_Std,
+                  "tp.exgns.diffs.store"=tp.exgns.diffs.store,
+                  "tp.exgns.all.itns"=tp.exgns.all.itns,
+                  "clusters"=M,
+                  "type"="Transition Probabilities")
   return(results)
 }

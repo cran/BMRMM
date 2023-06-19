@@ -2,7 +2,7 @@
 ### This function is used when ISI is modeled as mixture gammas ###
 ###################################################################
 
-model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burnin,K,init_alpha,init_beta) {
+model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init_alpha,init_beta) {
 
   ################## process data ##################
   # construct isi data and covs for simulation
@@ -20,7 +20,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
   num_combs <- nrow(all_combs)
   z.max <- K # number of mixture components
 
-  if (switch_off_fixed){
+  if (!fixed_effect){
     M00 <- ones(1,p)
   } else {
     M00 <- covs.max
@@ -36,9 +36,9 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
   lambdaalpha <- 0.01 # alpha_{isi,0}
   lambda <- array(lambda00,dim=c(z.max,1)) # lambda_{g1,g2,g3}
   # individual probability and lambda
-  if (!switch_off_random && !switch_off_fixed) {
+  if (random_effect && fixed_effect) {
     piv <- matrix(0.8,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
-  } else if (!switch_off_random) {
+  } else if (random_effect) {
     piv <- matrix(0,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
   } else { 
     piv <- matrix(1,nrow=max(mouseId),ncol=z.max) # probability for population-level effect
@@ -55,7 +55,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
   Beta <- matrix(1,nrow=simsize,ncol=z.max) # rate
 
   # cluster assignment for each covariate
-  if (switch_off_fixed) {
+  if (!fixed_effect) {
     z.cov <- ones(num_row,p) # initially, each covariate forms one cluster
     G <- matrix(1,nrow=p,ncol=max(covs.max))
   } else {
@@ -87,16 +87,16 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
   lambdaalpha_mice_all <- rep(0,simsize) # store alpha^0
 
   ################## simulation ##################
-
   for(iii in 1:simsize) {
     M[iii,] <- M00
     prob_mat[iii,] <- as.numeric(table(factor(z.vec,levels=1:z.max))/num_row)
     if(iii%%100==0) print(paste("Duration Times: Iteration ",iii))
-
+    
     # update # cluster for each covariate and cluster mapping
-    if(iii > 1 && !switch_off_fixed) {
+    if(iii > 1 && fixed_effect) {
       # update cluster indicator z
       M00 <- M[iii,]
+      
       for(pp in 1:p){
         M0 <- M00[pp] # current # of clusters of covariate pp
         if(M0==1) {
@@ -126,7 +126,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
           if(runif(1)<0.5) {  # with prob 0.5 split one mapped value into two
             df <- sort(G[pp,1:covs.max[pp]]) # cluster mapping for covariate pp
             z0 <- unique(df)   # z0 are unique cluster mappings, mm contains their positions
-            mm <- which(duplicated(df)==FALSE)             # mm contains the positions when they first appear on {1,...,n}
+            mm <- which(!duplicated(df))             # mm contains the positions when they first appear on {1,...,n}
             gn <- c(diff(mm),size(df,2)-mm[length(mm)]+1)  # frequencies of z0
             pgn <- cM[pp,gn]/sum(cM[pp,gn])                # see the definition of cM
             rr <- sum(rmultinom(1,size=1,prob=pgn)*(1:M0)) # rr is the state to split, gn[rr] is the frequency of rr
@@ -176,7 +176,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
             if(M0>2) {
               df <- sort(GG)
               z0 <- unique(df)   # z0 are unique cluster mappings, mm contains their positions
-              mm <- which(duplicated(df)==FALSE)             # mm contains the positions when they first appear on {1,...,n}
+              mm <- which(!duplicated(df))             # mm contains the positions when they first appear on {1,...,n}
               gn <- c(diff(mm),size(df,2)-mm[length(mm)]+1)  # frequencies of z0
               logR <- logR-log(sum(cM[pp,gn]))+log(M00[pp]*(M00[pp]-1)/2)
             } else {
@@ -268,7 +268,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
     df <- cbind(v+1,z.vec,z00)
     df <- df[do.call(order,as.data.frame(df)),]
     z0 <- unique(df)                     # z0 are the sorted unique combinations of (y,z_{pp,1},...,z_{pp,p00}),
-    m <- which(duplicated(df)==FALSE)    # m contains the positions when they first appear on {1,...,n}
+    m <- which(!duplicated(df))    # m contains the positions when they first appear on {1,...,n}
     m <- c(diff(m),size(df,1)-m[length(m)]+1) # m contains their frequencies
     clT[z0] <- clT[z0]+m                 # add the differences in positions to cells of clT corresponding to the unique combinations -> gives the number of times (y,z_{1},...,z_{p00}) appears
     clTdata <- array(clT,dim=c(2,z.max,prod(K00)))  # matrix representation of the tensor clT, with rows of the matrix corresponding to dimension 1 i.e. the levels of y
@@ -291,7 +291,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
       }
     }
 
-    if (!switch_off_random || !switch_off_fixed) {
+    if (random_effect || fixed_effect) {
       # update v (v=0: exgns; v=1: anmls)
       mouse_k_pairs <- cbind(mouseId,z.vec)
       prob_exgns <- piv[mouse_k_pairs]*lambda[cbind(z.vec,z00)]
@@ -304,7 +304,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
       v0 <- cbind(v+1,z.vec,mouseId)
       v0 <- v0[do.call(order,as.data.frame(v0)),]
       v00 <- cbind(unique(v0),1) # unique combinations of {v,k,mouse_id}
-      v0m <- which(duplicated(v0)==FALSE)
+      v0m <- which(!duplicated(v0))
       v0m <- c(diff(v0m),size(v0,1)-v0m[length(v0m)]+1) # contain occurrences of each {v,k,id}
       vMat <- array(rep(0,2*z.max*max(mouseId)),dim=c(2,z.max,max(mouseId),1))
       vMat[v00] <- v0m
@@ -315,7 +315,7 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
     }
     
     # update lambda_mice (lambda^(i))
-    if (!switch_off_random) {
+    if (random_effect) {
       for(id in 1:max(mouseId)){
         vMouseCt <- vMat[,,id,][2,]
         lambda_mice[id,] <- rdirichlet(1,lambda_mice_alpha*lambda0+vMouseCt)
@@ -383,18 +383,17 @@ model_cont_isi <- function(data,switch_off_random,switch_off_fixed,simsize,burni
     }
   }
 
-  results <- list("K"=K,
-                  "Xexgns"=covs,
+  results <- list("covs"=covs,
                   "dpreds"=covs.max,
                   "MCMCparams"=list("simsize"=simsize,"burnin"=burnin,"N_Thin"=5),
-                  "Duration_Times"=isi,
-                  "Comp_Assign"=z.vec,
-                  "Duration_Exgns_Store"=lambda_all,
-                  "Marginal_Prob"=prob_mat,
-                  "Shape_Samples"=Alpha,
-                  "Rate_Samples"=Beta,
-                  "Clusters"=M,
-                  "Type"="Duration Times")
+                  "duration.times"=isi,
+                  "comp.assignment"=z.vec,
+                  "duration.exgns.store"=lambda_all,
+                  "marginal.prob"=prob_mat,
+                  "shape.samples"=Alpha,
+                  "rate.samples"=Beta,
+                  "clusters"=M,
+                  "type"="Duration Times")
   return(results)
 
 } # end of function
