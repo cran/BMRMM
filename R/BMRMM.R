@@ -18,13 +18,13 @@ NULL
 #' 
 #' `duration.distr` can be one of the following: \cr
 #' \itemize{
-#' \item{`NULL`}{ duration times are ignored. This is the default setting.}
-#' \item{`list('mixgamma', shape, rate)`}{ duration times are modeled as a mixture gamma variable. `shape` and `rate`
-#'       must be numeric vectors of the same length. The length indicates the number of mixture components.}
-#' \item{`list('mixDirichlet', unit)`}{ duration times are modeled as a new state with discretization `unit`. The duration
+#' \item `NULL`: duration times are ignored. This is the default setting.
+#' \item `list('mixgamma', shape, rate)`: duration times are modeled as a mixture gamma variable. `shape` and `rate`
+#'       must be numeric vectors of the same length. The length indicates the number of mixture components.
+#' \item `list('mixDirichlet', unit)`: duration times are modeled as a new state with discretization `unit`. The duration
 #'       state is then analyzed along with the original states. For example, if an duration time entry is 20 and `unit` is 5, 
 #'       then the model will add 4 consecutive new states. If an duration time entry is 23.33 and `unit` is 5, then the model 
-#'       will still add 4 consecutive new states as the blocks are calculated with the floor operation.}
+#'       will still add 4 consecutive new states as the blocks are calculated with the floor operation.
 #' }
 #'
 #'@return An object of class `BMRMM` consisting of `results.trans` and `results.duration` if duration times are analyzed as a continuous variable. \cr
@@ -42,6 +42,7 @@ NULL
 #' `tp.exgns.diffs.store` \tab  difference in posterior mean of transition probabilities for every pair of covariate levels given levels of the other covariates. \cr
 #' `tp.exgns.all.itns` \tab population-level transition probabilities for every MCMC iteration. \cr
 #' `clusters` \tab number of clusters for each covariate for each MCMC iteration. \cr
+#' `cluster_labels` \tab the labels of the clusters for each covariate for each MCMC iteration. \cr
 #' `type` \tab a string identifier for results, which is "Transition Probabilities". \cr
 #' `cov.labels` \tab a list of string vectors giving labels of covariate levels. \cr
 #' `state.labels` \tab a list of strings giving labels of states. \cr
@@ -58,6 +59,7 @@ NULL
 #' `shape.samples` \tab estimated shape parameters for gamma mixtures for each MCMC iteration.\cr
 #' `rate.samples` \tab estimated rate parameters for gamma mixtures for each MCMC iteration.\cr
 #' `clusters` \tab number of clusters for each covariate for each MCMC iteration.\cr
+#' `cluster_labels` \tab the labels of the clusters for each covariate for each MCMC iteration.\cr
 #' `type` \tab a string identifier for results, which is "Duration Times".\cr
 #' `cov.labels` \tab a list of string vectors giving labels of covariate levels. \cr
 #'}

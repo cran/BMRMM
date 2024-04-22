@@ -52,6 +52,7 @@ model_transition <- function(data,random_effect,fixed_effect,simsize,burnin) {
   logmarginalprobs <- zeros(p,dmax)
   Ntot <- sz[1]
   z <- ones(Ntot,p) # covariate values
+  cluster_labels <- array(0,dim=c(N_MCMC+1,p,dmax)) # cluster labels for all iterations 
 
   for(j in 1:p) {
     G[j,1:dpreds[j]] <- 1:dpreds[j]
@@ -59,6 +60,7 @@ model_transition <- function(data,random_effect,fixed_effect,simsize,burnin) {
     pi[j,1:dpreds[j]] <- 1/dpreds[j]
   }
   GG <- G
+  cluster_labels[1,,] <- G
   log0 <- zeros(N_MCMC,1)
   ind_all <- unique(sortrows(as.matrix(cbind(Xnew,Id))))
 
@@ -198,7 +200,8 @@ model_transition <- function(data,random_effect,fixed_effect,simsize,burnin) {
         z[,j] <- GG[j,Xnew[,j]]
         M00[j] <- length(unique(z[,j]))
       }
-      M[kkk+1,] <- M00
+      M[kkk,] <- M00
+      cluster_labels[kkk,,] <- G
     }
 
     ### updating pi
@@ -448,6 +451,7 @@ model_transition <- function(data,random_effect,fixed_effect,simsize,burnin) {
                   "tp.exgns.diffs.store"=tp.exgns.diffs.store,
                   "tp.exgns.all.itns"=tp.exgns.all.itns,
                   "clusters"=M,
+                  "cluster_labels"=cluster_labels,
                   "type"="Transition Probabilities")
   return(results)
 }

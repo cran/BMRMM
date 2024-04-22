@@ -123,8 +123,11 @@ get_tp_local_test_results_by_level <- function(results,cov,delta,levels,comp_pai
     }
     res_by_levels_mean.diff[[row]] <- res_by_comp.pairs_mean.diff
     res_by_levels_null.test[[row]] <- res_by_comp.pairs_null.test
-    level_name <- sapply(1:length(inds),function(x) results$cov.labels[[inds[x]]][levels[row,x]])
-    level_name <- paste('Fixing:',paste(level_name,collapse=' '),sep='')
+    level_name <- 'Fixing:'
+    if (ncol(results$clusters) > 1) {
+      other_level_name <- sapply(1:length(inds),function(x) results$cov.labels[[inds[x]]][levels[row,x]])
+      level_name <- paste('Fixing:',paste(other_level_name,collapse=' '),sep='')
+    }
     names(res_by_levels_mean.diff)[[row]] <- level_name
     names(res_by_levels_null.test)[[row]] <- level_name
   }

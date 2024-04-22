@@ -33,15 +33,15 @@ Summarizing an object of class \code{BMRMM}, including results for transition pr
 \details{
 We give more explanation for the global tests and local tests results.
 \itemize{
-\item{Global tests (for both transition probabilities and duration times)}
+\item Global tests (for both transition probabilities and duration times)
 
-{Global tests are presented as a matrix, where the row denote the number of clusters and the column represents covariates.
+Global tests are presented as a matrix, where the row denote the number of clusters and the column represents covariates.
 For each row \code{i} and column \code{j}, the matrix entry is the percentage of the number of the clusters within the stored MCMC samples
 for this covariate, i.e., an estimation for \verb{Pr(# clusters for covariate j == i)}. We note that the probability
-\verb{Pr(# clusters for covariate j > 1)} would be the probability for the null hypothesis that the covariate \code{j} is significant.}
-\item{Local tests (for transition probabilities only)}
+\verb{Pr(# clusters for covariate j > 1)} would be the probability for the null hypothesis that the covariate \code{j} is significant.
+\item Local tests (for transition probabilities only)
 
-{Local tests focus on a particular covariate and compare the influence among its levels when the other covariates values are fixed. \cr
+Local tests focus on a particular covariate and compare the influence among its levels when the other covariates values are fixed. \cr
 Given a pair of levels of covariate \code{j}, say \code{j_1} and \code{j_2}, and given the levels of other covariates,
 the null hypothesis is that the difference between \code{j_1} and \code{j_2} is not significant for transition probabilities.
 It is calculated as the percentage of the samples with absolute difference less than \code{delta}.
@@ -50,7 +50,7 @@ The local tests provide two matrices of size \code{d0} x \code{d0} where \code{d
 \enumerate{
 \item \code{mean.diff} -- the mean of the absolute difference in each transition type between levels \code{j_1} and \code{j_2};
 \item \code{null.test} -- the probability of the null hypothesis that \code{j_1} and \code{j_2} have the same significance for each transition type.
-}}
+}
 }
 }
 \examples{

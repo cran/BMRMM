@@ -27,6 +27,7 @@ model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init
   }
   
   M <- matrix(0,nrow=simsize,ncol=p) # record # of clusters for each iteration
+  cluster_labels <- array(0,dim=c(simsize+1,p,max(covs.max))) # record # of clusters for each iteration
 
   clusts <- kmeans(isi,z.max)$cluster # get clusters via kmeans
   z.vec <- clusts # initialization for mixture component assignment
@@ -89,6 +90,7 @@ model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init
   ################## simulation ##################
   for(iii in 1:simsize) {
     M[iii,] <- M00
+    cluster_labels[iii,,] <- G
     prob_mat[iii,] <- as.numeric(table(factor(z.vec,levels=1:z.max))/num_row)
     if(iii%%100==0) print(paste("Duration Times: Iteration ",iii))
     
@@ -215,7 +217,7 @@ model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init
             z.cov <- zz
           }
         }
-        # end of #cluster appointment
+        # end of cluster appointment
         # start of cluster mapping
         if(M00[pp]>1){ # propose a new cluster index mapping
           zz <- z.cov              # initiate zz at z.cov
@@ -232,7 +234,7 @@ model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init
             np <- length(ind2)
           }
         }
-        if((M00[pp]==1)&&(length(unique(covs.max))==1)&&(iii<simsize/2)){
+        if((M00[pp]==1)&&(sum(M00>1)>0)&&(length(unique(covs.max))==1)&&(iii<simsize/2)){
           ind2 <- which(M00>1)     # the current set of important predictors
           tempind <- sample(length(ind2),1)
           temp <- ind2[tempind]      # choose one, x_{temp}, from the current set of important predictors
@@ -393,6 +395,7 @@ model_cont_isi <- function(data,random_effect,fixed_effect,simsize,burnin,K,init
                   "shape.samples"=Alpha,
                   "rate.samples"=Beta,
                   "clusters"=M,
+                  "cluster_labels"=cluster_labels,
                   "type"="Duration Times")
   return(results)
 

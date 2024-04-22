@@ -60,6 +60,7 @@ The field \code{results.trans} is a data frame giving the inference results of t
 \code{tp.exgns.diffs.store} \tab  difference in posterior mean of transition probabilities for every pair of covariate levels given levels of the other covariates. \cr
 \code{tp.exgns.all.itns} \tab population-level transition probabilities for every MCMC iteration. \cr
 \code{clusters} \tab number of clusters for each covariate for each MCMC iteration. \cr
+\code{cluster_labels} \tab the labels of the clusters for each covariate for each MCMC iteration. \cr
 \code{type} \tab a string identifier for results, which is "Transition Probabilities". \cr
 \code{cov.labels} \tab a list of string vectors giving labels of covariate levels. \cr
 \code{state.labels} \tab a list of strings giving labels of states. \cr
@@ -76,6 +77,7 @@ The field \code{results.duration} is a data frame giving the inference results o
 \code{shape.samples} \tab estimated shape parameters for gamma mixtures for each MCMC iteration.\cr
 \code{rate.samples} \tab estimated rate parameters for gamma mixtures for each MCMC iteration.\cr
 \code{clusters} \tab number of clusters for each covariate for each MCMC iteration.\cr
+\code{cluster_labels} \tab the labels of the clusters for each covariate for each MCMC iteration.\cr
 \code{type} \tab a string identifier for results, which is "Duration Times".\cr
 \code{cov.labels} \tab a list of string vectors giving labels of covariate levels. \cr
 }
@@ -89,13 +91,13 @@ a discrete or continuous variable via defining \code{duration.distr}.
 
 \code{duration.distr} can be one of the following: \cr
 \itemize{
-\item{\code{NULL}}{ duration times are ignored. This is the default setting.}
-\item{\code{list('mixgamma', shape, rate)}}{ duration times are modeled as a mixture gamma variable. \code{shape} and \code{rate}
-must be numeric vectors of the same length. The length indicates the number of mixture components.}
-\item{\code{list('mixDirichlet', unit)}}{ duration times are modeled as a new state with discretization \code{unit}. The duration
+\item \code{NULL}: duration times are ignored. This is the default setting.
+\item \code{list('mixgamma', shape, rate)}: duration times are modeled as a mixture gamma variable. \code{shape} and \code{rate}
+must be numeric vectors of the same length. The length indicates the number of mixture components.
+\item \code{list('mixDirichlet', unit)}: duration times are modeled as a new state with discretization \code{unit}. The duration
 state is then analyzed along with the original states. For example, if an duration time entry is 20 and \code{unit} is 5,
 then the model will add 4 consecutive new states. If an duration time entry is 23.33 and \code{unit} is 5, then the model
-will still add 4 consecutive new states as the blocks are calculated with the floor operation.}
+will still add 4 consecutive new states as the blocks are calculated with the floor operation.
 }
 }
 \examples{

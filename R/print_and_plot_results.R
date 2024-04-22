@@ -28,15 +28,15 @@
 #' 
 #' @details We give more explanation for the global tests and local tests results.
 #' \itemize{
-#' \item{Global tests (for both transition probabilities and duration times)}
+#' \item Global tests (for both transition probabilities and duration times)
 #' 
-#' {Global tests are presented as a matrix, where the row denote the number of clusters and the column represents covariates.
+#' Global tests are presented as a matrix, where the row denote the number of clusters and the column represents covariates.
 #' For each row `i` and column `j`, the matrix entry is the percentage of the number of the clusters within the stored MCMC samples 
 #' for this covariate, i.e., an estimation for `Pr(# clusters for covariate j == i)`. We note that the probability 
-#' `Pr(# clusters for covariate j > 1)` would be the probability for the null hypothesis that the covariate `j` is significant.}
-#' \item{Local tests (for transition probabilities only)}
+#' `Pr(# clusters for covariate j > 1)` would be the probability for the null hypothesis that the covariate `j` is significant.
+#' \item Local tests (for transition probabilities only)
 #' 
-#' {Local tests focus on a particular covariate and compare the influence among its levels when the other covariates values are fixed. \cr
+#' Local tests focus on a particular covariate and compare the influence among its levels when the other covariates values are fixed. \cr
 #' Given a pair of levels of covariate `j`, say `j_1` and `j_2`, and given the levels of other covariates,
 #' the null hypothesis is that the difference between `j_1` and `j_2` is not significant for transition probabilities.
 #' It is calculated as the percentage of the samples with absolute difference less than `delta`.
@@ -45,7 +45,7 @@
 #' \enumerate{
 #' \item `mean.diff` -- the mean of the absolute difference in each transition type between levels `j_1` and `j_2`; 
 #' \item `null.test` -- the probability of the null hypothesis that `j_1` and `j_2` have the same significance for each transition type.
-#' }}
+#' }
 #' }
 #' 
 #' @seealso 
